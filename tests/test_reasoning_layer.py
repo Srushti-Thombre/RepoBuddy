@@ -29,7 +29,7 @@ def main():
     
     print("\n--- 2. AI Reasoning: Architecture Analysis ---")
     
-    arch_agent = ArchitectureAgent(model_name="gemini-2.5-pro")
+    arch_agent = ArchitectureAgent()
     arch_analysis = arch_agent.classify_architecture(repo_ctx, github_ctx)
     
     print("\n[Architecture Analysis Results]")
@@ -42,7 +42,7 @@ def main():
     
     print("\n--- 3. AI Reasoning: Contribution Mentorship ---")
     
-    contrib_agent = ContributionAgent(model_name="gemini-2.5-pro")
+    contrib_agent = ContributionAgent()
     recommendations = contrib_agent.identify_contributions(repo_ctx, github_ctx, arch_analysis)
     
     print(f"\n[Contribution Recommendations Generated: {len(recommendations)}]")

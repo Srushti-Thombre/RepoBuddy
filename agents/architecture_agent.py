@@ -9,6 +9,7 @@ and uses Gemini (via ADK + genai client) to generate a structured
 from __future__ import annotations
 
 import sys
+import os
 from typing import Any
 
 from google.adk import Agent
@@ -18,6 +19,7 @@ from pydantic import ValidationError
 from models.architecture_context import ArchitectureAnalysis
 from models.github_context import GitHubContext
 from models.repository_context import RepositoryContext
+from .retry import with_retry
 
 
 class ArchitectureAgent:
@@ -32,12 +34,12 @@ class ArchitectureAgent:
     - Produce a structured ArchitectureAnalysis model.
     """
 
-    def __init__(self, model_name: str = "gemini-2.5-pro") -> None:
+    def __init__(self, model_name: str | None = None) -> None:
         """
         Initializes the ArchitectureAgent and configures its underlying
         ADK Agent structure.
         """
-        self.model_name = model_name
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         self.client = Client()
 
         # ADK Agent instantiated with clear instructions
@@ -57,6 +59,7 @@ class ArchitectureAgent:
             ),
         )
 
+    @with_retry()
     def classify_architecture(
         self, repo_ctx: RepositoryContext, github_ctx: GitHubContext
     ) -> ArchitectureAnalysis:

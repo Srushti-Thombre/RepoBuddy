@@ -108,6 +108,7 @@ copy .env.example .env
 
 Configure your credentials:
 *   `GEMINI_API_KEY`: **Required**. Used by ArchitectureAgent and ContributionAgent for reasoning.
+*   `GEMINI_MODEL`: **Optional**. The Gemini model to use (defaults to `gemini-2.5-flash`). You can use `gemini-2.5-pro` if you have the API quota.
 *   `GITHUB_TOKEN`: **Optional but Recommended**. Avoids strict anonymous GitHub API rate limits.
 
 ### 3. Usage

@@ -15,6 +15,7 @@ It uses a two-step generation flow:
 from __future__ import annotations
 
 import sys
+import os
 from typing import Any
 
 from google.adk import Agent
@@ -25,6 +26,7 @@ from models.architecture_context import ArchitectureAnalysis
 from models.contribution_context import ContributionCandidateList, ContributionRecommendation
 from models.github_context import GitHubContext
 from models.repository_context import RepositoryContext
+from .retry import with_retry
 
 
 class ContributionAgent:
@@ -38,12 +40,12 @@ class ContributionAgent:
     - Provide customized learning paths and mentor advice.
     """
 
-    def __init__(self, model_name: str = "gemini-2.5-pro") -> None:
+    def __init__(self, model_name: str | None = None) -> None:
         """
         Initializes the ContributionAgent and configures its underlying
         ADK Agent structure.
         """
-        self.model_name = model_name
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         self.client = Client()
 
         self.adk_agent = Agent(
@@ -63,6 +65,7 @@ class ContributionAgent:
             ),
         )
 
+    @with_retry()
     def identify_contributions(
         self,
         repo_ctx: RepositoryContext,

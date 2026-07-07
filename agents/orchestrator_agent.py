@@ -5,6 +5,7 @@ OrchestratorAgent — Coordinates the entire codebase analysis and mentoring wor
 from __future__ import annotations
 
 import sys
+import os
 import tempfile
 import shutil
 import urllib.parse
@@ -25,14 +26,15 @@ class OrchestratorAgent:
     OrchestratorAgent manages the sequential execution of all RepoBuddy agents.
     """
 
-    def __init__(self, model_name: str = "gemini-2.5-pro") -> None:
+    def __init__(self, model_name: str | None = None) -> None:
         """
         Initializes the OrchestratorAgent and its sub-agents.
         """
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         self.repository_agent = RepositoryAgent()
         self.github_agent = GitHubAgent()
-        self.architecture_agent = ArchitectureAgent(model_name=model_name)
-        self.contribution_agent = ContributionAgent(model_name=model_name)
+        self.architecture_agent = ArchitectureAgent(model_name=self.model_name)
+        self.contribution_agent = ContributionAgent(model_name=self.model_name)
         self.report_agent = ReportAgent()
 
         self.adk_agent = Agent(
