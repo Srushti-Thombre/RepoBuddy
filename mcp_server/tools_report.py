@@ -13,6 +13,13 @@ def save_markdown(file_path: str, content: str) -> bool:
     Returns:
         bool: True if writing succeeded, False otherwise.
     """
-    # TODO: Implement safe directory verification and writing encoding support
+    import os
     print(f"[MCP TOOL] Saving markdown content to {file_path}...")
-    return True
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return True
+    except Exception as e:
+        print(f"[MCP TOOL ERROR] Failed to save {file_path}: {e}")
+        return False

@@ -87,22 +87,41 @@ class OrchestratorAgent:
             print("[ORCHESTRATOR] Step 3: Performing architectural reasoning...", file=sys.stderr)
             arch_analysis = self.architecture_agent.classify_architecture(repo_ctx, github_ctx)
 
-            # 4. Contribution Reasoning
-            print("[ORCHESTRATOR] Step 4: Discovering contribution opportunities...", file=sys.stderr)
-            contributions = self.contribution_agent.identify_contributions(repo_ctx, github_ctx, arch_analysis)
-
-            # 5. Report Generation
-            print("[ORCHESTRATOR] Step 5: Generating Markdown reports...", file=sys.stderr)
-            result_paths = self.report_agent.format_and_save(
+            # 4. Save Project Analysis immediately
+            print("[ORCHESTRATOR] Step 4: Generating ProjectAnalysis.md...", file=sys.stderr)
+            pa_path = self.report_agent.save_project_analysis(
                 repo_ctx=repo_ctx,
                 github_ctx=github_ctx,
                 arch_analysis=arch_analysis,
-                contributions=contributions,
                 output_dir=output_dir
             )
 
-            print("[ORCHESTRATOR] Mentorship flow completed successfully.", file=sys.stderr)
-            return result_paths
+            # 5. Contribution Reasoning (Fault-tolerant)
+            print("[ORCHESTRATOR] Step 5: Discovering contribution opportunities...", file=sys.stderr)
+            try:
+                contributions = self.contribution_agent.identify_contributions(repo_ctx, github_ctx, arch_analysis)
+                
+                # 6. Save Contribution Roadmap
+                print("[ORCHESTRATOR] Step 6: Generating ContributionRoadmap.md...", file=sys.stderr)
+                cr_path = self.report_agent.save_contribution_roadmap(
+                    github_ctx=github_ctx,
+                    contributions=contributions,
+                    output_dir=output_dir
+                )
+            except Exception as contrib_err:
+                print(f"[ORCHESTRATOR] Warning: Contribution discovery failed: {contrib_err}", file=sys.stderr)
+                
+                cr_path = self.report_agent.save_fallback_contribution_roadmap(
+                    github_ctx=github_ctx,
+                    output_dir=output_dir,
+                    error_message="Contribution recommendations could not be generated because the Gemini model was temporarily unavailable or under high demand. The repository analysis completed successfully. Please retry the analysis later."
+                )
+
+            print("[ORCHESTRATOR] Mentorship flow completed.", file=sys.stderr)
+            return {
+                "project_analysis_path": pa_path,
+                "contribution_roadmap_path": cr_path,
+            }
 
         except Exception as e:
             print(f"\n[ORCHESTRATOR] Flow failed: {e}", file=sys.stderr)

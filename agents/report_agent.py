@@ -27,60 +27,77 @@ class ReportAgent:
         """
         pass
 
-    def format_and_save(
+    def save_project_analysis(
         self,
         repo_ctx: RepositoryContext,
         github_ctx: GitHubContext,
         arch_analysis: ArchitectureAnalysis,
-        contributions: list[ContributionRecommendation],
         output_dir: str,
-    ) -> dict[str, str]:
-        """
-        Synthesizes agent metadata outputs, formats them, and saves
-        ProjectAnalysis.md and ContributionRoadmap.md.
-
-        Args:
-            repo_ctx: Data from RepositoryAgent.
-            github_ctx: Data from GitHubAgent.
-            arch_analysis: Data from ArchitectureAgent.
-            contributions: Data from ContributionAgent.
-            output_dir: Output folder location.
-
-        Returns:
-            dict: Saved markdown file path details.
-        """
-        print(f"[ReportAgent] Generating reports in '{output_dir}'...", file=sys.stderr)
-        
-        # Ensure output dir exists
+    ) -> str:
+        """Saves the ProjectAnalysis.md report."""
+        print(f"[ReportAgent] Generating ProjectAnalysis in '{output_dir}'...", file=sys.stderr)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-        # Generate texts
-        project_analysis_text = self._build_project_analysis(
-            repo_ctx, github_ctx, arch_analysis, now_str
-        )
-        contribution_roadmap_text = self._build_contribution_roadmap(
-            github_ctx, contributions, now_str
-        )
-
-        # File paths
+        text = self._build_project_analysis(repo_ctx, github_ctx, arch_analysis, now_str)
         pa_path = str(Path(output_dir) / "ProjectAnalysis.md")
-        cr_path = str(Path(output_dir) / "ContributionRoadmap.md")
-
-        # Save files using the MCP tool function
-        pa_saved = save_markdown(pa_path, project_analysis_text)
-        cr_saved = save_markdown(cr_path, contribution_roadmap_text)
-
-        if not pa_saved:
+        saved = save_markdown(pa_path, text)
+        
+        if not saved:
             print(f"[ReportAgent] Warning: Failed to save {pa_path}.", file=sys.stderr)
-        if not cr_saved:
-            print(f"[ReportAgent] Warning: Failed to save {cr_path}.", file=sys.stderr)
+        
+        return pa_path
 
-        return {
-            "project_analysis_path": pa_path,
-            "contribution_roadmap_path": cr_path,
-        }
+    def save_contribution_roadmap(
+        self,
+        github_ctx: GitHubContext,
+        contributions: list[ContributionRecommendation],
+        output_dir: str,
+    ) -> str:
+        """Saves the ContributionRoadmap.md report."""
+        print(f"[ReportAgent] Generating ContributionRoadmap in '{output_dir}'...", file=sys.stderr)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        text = self._build_contribution_roadmap(github_ctx, contributions, now_str)
+        cr_path = str(Path(output_dir) / "ContributionRoadmap.md")
+        saved = save_markdown(cr_path, text)
+        
+        if not saved:
+            print(f"[ReportAgent] Warning: Failed to save {cr_path}.", file=sys.stderr)
+            
+        return cr_path
+
+    def save_fallback_contribution_roadmap(
+        self,
+        github_ctx: GitHubContext,
+        output_dir: str,
+        error_message: str
+    ) -> str:
+        """Saves a partial fallback ContributionRoadmap.md if AI generation fails."""
+        print(f"[ReportAgent] Generating Fallback ContributionRoadmap in '{output_dir}'...", file=sys.stderr)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        lines = [
+            f"# Contribution Roadmap: {github_ctx.full_name}",
+            "",
+            f"**Generated:** {now_str}  ",
+            f"**Repository:** [{github_ctx.full_name}](https://github.com/{github_ctx.full_name})",
+            "",
+            "> [!WARNING]",
+            f"> {error_message}",
+            "",
+            "Please try running the orchestration flow again later."
+        ]
+        
+        cr_path = str(Path(output_dir) / "ContributionRoadmap.md")
+        saved = save_markdown(cr_path, "\n".join(lines))
+        
+        if not saved:
+            print(f"[ReportAgent] Warning: Failed to save {cr_path}.", file=sys.stderr)
+            
+        return cr_path
 
     def _build_project_analysis(
         self,
