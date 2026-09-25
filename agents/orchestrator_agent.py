@@ -98,6 +98,7 @@ class OrchestratorAgent:
 
             # 5. Contribution Reasoning (Fault-tolerant)
             print("[ORCHESTRATOR] Step 5: Discovering contribution opportunities...", file=sys.stderr)
+            contributions = []
             try:
                 contributions = self.contribution_agent.identify_contributions(repo_ctx, github_ctx, arch_analysis)
                 
@@ -121,6 +122,7 @@ class OrchestratorAgent:
             return {
                 "project_analysis_path": pa_path,
                 "contribution_roadmap_path": cr_path,
+                "contributions": contributions,
             }
 
         except Exception as e:

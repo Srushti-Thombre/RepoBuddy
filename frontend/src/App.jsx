@@ -15,15 +15,19 @@ import {
   ArrowRight,
   RefreshCw,
   Sun,
-  Moon
+  Moon,
+  LayoutGrid
 } from 'lucide-react';
+import OpportunityCard from './OpportunityCard';
+import Workspace from './Workspace';
 
 export default function App() {
   const [repoUrl, setRepoUrl] = useState('https://github.com/google/adk-python');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
-  const [activeTab, setActiveTab] = useState('project_analysis'); // 'project_analysis' | 'contribution_roadmap'
+  const [activeTab, setActiveTab] = useState('opportunities'); // 'project_analysis' | 'contribution_roadmap' | 'opportunities'
+  const [activeOpportunity, setActiveOpportunity] = useState(null);
   const [copied, setCopied] = useState(false);
   
   // Theme state: defaults to dark
@@ -244,8 +248,15 @@ export default function App() {
             <div className="tab-header">
               <div className="tab-buttons">
                 <button
+                  className={`tab-btn ${activeTab === 'opportunities' ? 'active' : ''}`}
+                  onClick={() => { setActiveTab('opportunities'); setActiveOpportunity(null); }}
+                >
+                  <LayoutGrid size={18} />
+                  Opportunities
+                </button>
+                <button
                   className={`tab-btn ${activeTab === 'project_analysis' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('project_analysis')}
+                  onClick={() => { setActiveTab('project_analysis'); setActiveOpportunity(null); }}
                 >
                   <FileText size={18} />
                   Project Analysis
@@ -253,10 +264,10 @@ export default function App() {
 
                 <button
                   className={`tab-btn ${activeTab === 'contribution_roadmap' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('contribution_roadmap')}
+                  onClick={() => { setActiveTab('contribution_roadmap'); setActiveOpportunity(null); }}
                 >
                   <MapPin size={18} />
-                  Contribution Roadmap
+                  Roadmap (MD)
                 </button>
               </div>
 
@@ -272,12 +283,41 @@ export default function App() {
               </div>
             </div>
 
-            {/* Markdown Display */}
-            <div className="markdown-body">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {currentMarkdown}
-              </ReactMarkdown>
-            </div>
+            {/* Main Content Area */}
+            {activeTab === 'opportunities' ? (
+              <div className="opportunities-area">
+                {activeOpportunity ? (
+                  <Workspace 
+                    opportunity={activeOpportunity} 
+                    repoUrl={repoUrl}
+                    onBack={() => setActiveOpportunity(null)} 
+                  />
+                ) : (
+                  <div className="opportunities-grid">
+                    {data.opportunities && data.opportunities.length > 0 ? (
+                      data.opportunities.map(opp => (
+                        <OpportunityCard 
+                          key={opp.id} 
+                          opportunity={opp} 
+                          onClick={() => setActiveOpportunity(opp)} 
+                        />
+                      ))
+                    ) : (
+                      <div className="no-opportunities">
+                        <AlertCircle size={24} />
+                        <p>No structured opportunities found in the analysis.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="markdown-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {currentMarkdown}
+                </ReactMarkdown>
+              </div>
+            )}
           </div>
         )}
       </main>
