@@ -22,3 +22,11 @@ reports/*.md
 .idea/
 .vscode/
 .agent
+
+
+.env
+.venv/
+__pycache__/
+frontend/node_modules/
+frontend/dist/
+reports/
